@@ -20,6 +20,9 @@ const NAMES: Array[String] = [
 @export var wander_radius: float = 1.6
 @export var respawn_delay: float = 10.0
 
+var kind := "spirit"
+var note := ""
+var aim_height := 1.0
 var fade := 1.0
 var home := Vector3.ZERO
 var time := 0.0
@@ -62,6 +65,14 @@ func _process(delta: float) -> void:
 		var target_yaw := atan2(-to_player.x, -to_player.z)
 		rotation.y = lerp_angle(rotation.y, target_yaw, clampf(delta * 1.5, 0.0, 1.0))
 	_apply_alpha()
+
+
+func configure(pos: Vector3, new_lens: int, new_name: String) -> void:
+	home = pos
+	global_position = pos
+	lens = new_lens
+	spirit_name = new_name
+	_apply_lens()
 
 
 func is_capturable() -> bool:

@@ -229,7 +229,7 @@ func _spirits_in_frame() -> Array:
 			continue
 		if int(spirit.get("lens")) != current_lens:
 			continue
-		var target := spirit.global_position + Vector3(0.0, 1.0, 0.0)
+		var target := spirit.global_position + Vector3(0.0, float(spirit.get("aim_height")), 0.0)
 		if camera.is_position_behind(target):
 			continue
 		var dist := camera.global_position.distance_to(target)
@@ -243,6 +243,8 @@ func _spirits_in_frame() -> Array:
 		found.append({
 			"node": spirit,
 			"name": spirit.get("spirit_name"),
+			"kind": spirit.get("kind"),
+			"note": spirit.get("note"),
 			"score": clampf(0.7 * centered + 0.3 * closeness, 0.0, 1.0),
 		})
 	return found
@@ -256,7 +258,7 @@ func _take_photo() -> void:
 	for entry in _spirits_in_frame():
 		var spirit := entry["node"] as Node3D
 		spirit.call("capture", entry["score"])
-		report.append({"name": entry["name"], "score": entry["score"]})
+		report.append({"name": entry["name"], "score": entry["score"], "kind": entry["kind"], "note": entry["note"]})
 	photo_taken.emit(report, film_left)
 	if film_left <= 0:
 		reload_timer = RELOAD_TIME

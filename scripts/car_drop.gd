@@ -4,8 +4,14 @@ extends Node3D
 
 signal landed
 signal blackout
+signal subtitle_changed(text: String)
+signal night_finished
+
+const NightData := preload("res://scripts/night_data.gd")
 
 const MODEL_PATH := "res://models/dirty_car.glb"
+const BLACKOUT_TIME := 1.6
+const DREAM_DELAY := 1.0
 const CAR_SCALE := 0.006
 const MODEL_YAW_DEG := 0.0
 const YAW_OFFSET_DEG := 90.0
@@ -18,6 +24,8 @@ const MAX_IMPACT_SPEED := 44.0
 
 var holder: Node3D
 var thud: AudioStreamPlayer
+var dream_voice: AudioStreamPlayer
+var dream_text := ""
 var falling := false
 var has_landed := false
 var blacked_out := false
@@ -39,9 +47,25 @@ func _ready() -> void:
 	thud.volume_db = 2.0
 	add_child(thud)
 
+	var cfg := NightData.config()
+	dream_voice = AudioStreamPlayer.new()
+	dream_voice.stream = _load_mp3(cfg["dream"]["voice"])
+	add_child(dream_voice)
+	dream_text = cfg["dream"]["text"]
+
+	var car_drops: bool = cfg["car_drops"]
+	if not car_drops and NightData.car_saved:
+		holder.transform = NightData.car_transform
+		holder.visible = true
+
 	var phone := get_node_or_null("../Player/PhoneCall")
 	if phone != null:
-		phone.connect(&"call_ended", drop)
+		phone.connect(&"call_ended", drop if car_drops else _enable_ending)
+
+
+func _enable_ending() -> void:
+	has_landed = true
+	landed.emit()
 
 
 func drop() -> void:
@@ -62,6 +86,24 @@ func _process(_delta: float) -> void:
 		blacked_out = true
 		get_node("../Player").set("controls_locked", true)
 		blackout.emit()
+		_play_dream_line()
+
+
+func _play_dream_line() -> void:
+	await get_tree().create_timer(BLACKOUT_TIME).timeout
+	var ambience := get_node_or_null("../Ambience") as AudioStreamPlayer
+	if ambience != null:
+		ambience.stop()
+	await get_tree().create_timer(DREAM_DELAY).timeout
+	AudioServer.set_bus_volume_db(0, 0.0)
+	subtitle_changed.emit(dream_text)
+	if dream_voice.stream != null:
+		dream_voice.play()
+		await dream_voice.finished
+	else:
+		await get_tree().create_timer(1.5 + dream_text.length() * 0.06).timeout
+	subtitle_changed.emit("")
+	night_finished.emit()
 
 
 func _physics_process(delta: float) -> void:
@@ -79,6 +121,8 @@ func _physics_process(delta: float) -> void:
 			velocity_y = 0.0
 			falling = false
 			has_landed = true
+			NightData.car_transform = holder.transform
+			NightData.car_saved = true
 			landed.emit()
 
 
@@ -111,6 +155,16 @@ func _make_thud_sound() -> AudioStreamWAV:
 	wav.stereo = false
 	wav.data = data
 	return wav
+
+
+func _load_mp3(path: String) -> AudioStream:
+	if ResourceLoader.exists(path):
+		return load(path) as AudioStreamMP3
+	if FileAccess.file_exists(path):
+		var stream := AudioStreamMP3.new()
+		stream.data = FileAccess.get_file_as_bytes(path)
+		return stream
+	return null
 
 
 func _load_model() -> Node3D:

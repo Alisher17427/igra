@@ -11,18 +11,13 @@ signal call_ended
 
 enum State { IDLE, WAITING, RINGING, ANSWERED, DONE }
 
-const SPIRITS_NEEDED := 3
+const NightData := preload("res://scripts/night_data.gd")
+
 const RING_DELAY := 2.5
 const MODEL_PATH := "res://models/motorola_razr_cell_phone.glb"
 const RING_PATH := "res://audio/ringtone_razr.mp3"
-const VOICE_PATH := "res://audio/call_voice.mp3"
 const PICKUP_PATH := "res://audio/phone_pickup.mp3"
-const YES_PATH := "res://audio/call_yes.mp3"
-const NO_PATH := "res://audio/call_no.mp3"
 const VOICE_DELAY := 1.0
-const VOICE_SUBTITLE := "You're done with the ghosts?"
-const YES_SUBTITLE := "Alright, hop in the car."
-const NO_SUBTITLE := "Please don't lie to me."
 const PHONE_SCALE := 0.4
 const MODEL_CENTER := Vector3(0.0, -0.27, 0.0)
 const HOLD_POS := Vector3(-0.2, -0.15, -0.42)
@@ -42,6 +37,7 @@ var pickup: AudioStreamPlayer
 var yes_voice: AudioStreamPlayer
 var no_voice: AudioStreamPlayer
 var player: Node3D
+var cfg: Dictionary = {}
 var waiting_choice := false
 var answer_choice := ""
 var hold_xform := Transform3D.IDENTITY
@@ -66,8 +62,10 @@ func _ready() -> void:
 	ringtone.volume_db = -4.0
 	add_child(ringtone)
 
+	cfg = NightData.config()
+
 	voice = AudioStreamPlayer.new()
-	voice.stream = _load_mp3(VOICE_PATH, false)
+	voice.stream = _load_mp3(cfg["call"]["voice"], false)
 	voice.volume_db = -2.0
 	add_child(voice)
 
@@ -76,12 +74,12 @@ func _ready() -> void:
 	add_child(pickup)
 
 	yes_voice = AudioStreamPlayer.new()
-	yes_voice.stream = _load_mp3(YES_PATH, false)
+	yes_voice.stream = _load_mp3(cfg["yes"]["voice"], false)
 	yes_voice.volume_db = -2.0
 	add_child(yes_voice)
 
 	no_voice = AudioStreamPlayer.new()
-	no_voice.stream = _load_mp3(NO_PATH, false)
+	no_voice.stream = _load_mp3(cfg["no"]["voice"], false)
 	no_voice.volume_db = -2.0
 	add_child(no_voice)
 
@@ -109,8 +107,10 @@ func _process(delta: float) -> void:
 
 
 func _on_photo_taken(report: Array, _film: int) -> void:
-	total_captured += report.size()
-	if state == State.IDLE and total_captured >= SPIRITS_NEEDED:
+	for entry in report:
+		if entry["kind"] == cfg["objective"]:
+			total_captured += 1
+	if state == State.IDLE and total_captured >= int(cfg["needed"]):
 		state = State.WAITING
 		await get_tree().create_timer(RING_DELAY).timeout
 		_start_ringing()
@@ -128,11 +128,7 @@ func _answer() -> void:
 	pickup.play()
 	answered.emit()
 	await get_tree().create_timer(VOICE_DELAY).timeout
-	if voice.stream != null:
-		voice.play()
-		subtitle_changed.emit(VOICE_SUBTITLE)
-		await voice.finished
-		subtitle_changed.emit("")
+	await _say(voice, cfg["call"]["text"])
 	player.set("controls_locked", true)
 	waiting_choice = true
 	choice_requested.emit()
@@ -146,16 +142,20 @@ func submit_choice(answer: String) -> void:
 	player.set("controls_locked", false)
 	choice_made.emit(answer)
 	var reply := yes_voice if answer == "Yes" else no_voice
-	var reply_text := YES_SUBTITLE if answer == "Yes" else NO_SUBTITLE
-	if reply.stream != null:
-		reply.play()
-		subtitle_changed.emit(reply_text)
-		await reply.finished
-		subtitle_changed.emit("")
-	else:
-		await get_tree().create_timer(1.2).timeout
+	var reply_key := "yes" if answer == "Yes" else "no"
+	await _say(reply, cfg[reply_key]["text"])
 	state = State.DONE
 	call_ended.emit()
+
+
+func _say(line_player: AudioStreamPlayer, text: String) -> void:
+	subtitle_changed.emit(text)
+	if line_player.stream != null:
+		line_player.play()
+		await line_player.finished
+	else:
+		await get_tree().create_timer(1.5 + text.length() * 0.06).timeout
+	subtitle_changed.emit("")
 
 
 func _deg_to_rad_vec(v: Vector3) -> Vector3:
@@ -177,8 +177,10 @@ func _load_mp3(path: String, loop: bool) -> AudioStream:
 	var stream: AudioStreamMP3
 	if ResourceLoader.exists(path):
 		stream = load(path) as AudioStreamMP3
-	else:
+	elif FileAccess.file_exists(path):
 		stream = AudioStreamMP3.new()
 		stream.data = FileAccess.get_file_as_bytes(path)
+	else:
+		return null
 	stream.loop = loop
 	return stream
