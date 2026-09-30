@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://ck8ldsoe3hoxm"]
 
+[ext_resource type="Script" uid="uid://b5ymwkys21qgl" path="res://scripts/ambience_player.gd" id="0_ambience_script"]
+[ext_resource type="AudioStream" uid="uid://dfmok1kaka4pw" path="res://audio/ambience.mp3" id="0_ambience_stream"]
 [ext_resource type="Script" uid="uid://cktr0n32h7y1g" path="res://scripts/player.gd" id="0_player_script"]
-[ext_resource type="Script" path="res://scripts/ambience_player.gd" id="0_ambience_script"]
-[ext_resource type="AudioStream" path="res://audio/ambience.mp3" id="0_ambience_stream"]
 [ext_resource type="PackedScene" uid="uid://buvuaae2u1ilb" path="res://Foliage Sample Pack/Scenes/tree_juniper.tscn" id="1_dead"]
 [ext_resource type="PackedScene" uid="uid://deta7fer5cd0t" path="res://Foliage Sample Pack/Scenes/tree_juniper_regular.tscn" id="2_reg"]
 [ext_resource type="PackedScene" uid="uid://bft40ctwp3y25" path="res://Foliage Sample Pack/Scenes/plant_jello_bush_slim.tscn" id="3_jello"]
@@ -10,7 +10,11 @@
 [ext_resource type="PackedScene" uid="uid://dxonjjv1wbos7" path="res://Foliage Sample Pack/Scenes/ug_grass_regular_.tscn" id="5_grass"]
 [ext_resource type="PackedScene" uid="uid://diixm0i6og4xv" path="res://Foliage Sample Pack/Scenes/ug_mouse_ears.tscn" id="6_mouse"]
 [ext_resource type="PackedScene" uid="uid://crjlsyndifu7d" path="res://Foliage Sample Pack/Scenes/ug_simple_clovers.tscn" id="7_clover"]
-[ext_resource type="Shader" path="res://shaders/sky_psx.gdshader" id="8_sky_shader"]
+[ext_resource type="Shader" uid="uid://ungn13rig28u" path="res://shaders/sky_psx.gdshader" id="8_sky_shader"]
+[ext_resource type="PackedScene" path="res://scenes/spirit.tscn" id="9_spirit"]
+[ext_resource type="PackedScene" uid="uid://dxuqrj2pnfvbc" path="res://models/camera_light_glow.glb" id="10_cam"]
+[ext_resource type="Script" uid="uid://csnmdni88kmj2" path="res://scripts/phone_call.gd" id="11_phone"]
+[ext_resource type="Script" uid="uid://dnff7m72yasdi" path="res://scripts/car_drop.gd" id="12_car"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_sky"]
 shader = ExtResource("8_sky_shader")
@@ -48,22 +52,13 @@ frequency = 0.08
 fractal_octaves = 3
 fractal_gain = 0.6
 
-[sub_resource type="Gradient" id="Gradient_ground"]
-offsets = PackedFloat32Array(0, 0.5, 1)
-colors = PackedColorArray(0.129, 0.192, 0.071, 1, 0.263, 0.361, 0.153, 1, 0.42, 0.53, 0.24, 1)
-
-[sub_resource type="GradientTexture1D" id="GradientTexture1D_ground"]
-gradient = SubResource("Gradient_ground")
-
 [sub_resource type="NoiseTexture2D" id="NoiseTexture2D_ground"]
-seamless = true
-color_ramp = SubResource("GradientTexture1D_ground")
 noise = SubResource("FastNoiseLite_ground")
+seamless = true
 
 [sub_resource type="StandardMaterial3D" id="StandardMaterial3D_ground"]
 albedo_color = Color(0.35, 0.46, 0.22, 1)
 albedo_texture = SubResource("NoiseTexture2D_ground")
-roughness = 1.0
 uv1_scale = Vector3(25, 25, 1)
 
 [sub_resource type="BoxShape3D" id="BoxShape3D_ground"]
@@ -74,7 +69,7 @@ size = Vector3(150, 0.1, 150)
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1515765027]
 environment = SubResource("Environment_1")
 
-[node name="Ambience" type="AudioStreamPlayer" parent="."]
+[node name="Ambience" type="AudioStreamPlayer" parent="." unique_id=1978130325]
 stream = ExtResource("0_ambience_stream")
 volume_db = -15.0
 script = ExtResource("0_ambience_script")
@@ -97,7 +92,13 @@ shape = SubResource("CapsuleShape3D_player")
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
 current = true
 
-[node name="Footsteps" type="AudioStreamPlayer" parent="Player"]
+[node name="CameraModel" parent="Player/Camera3D" unique_id=592166529 instance=ExtResource("10_cam")]
+transform = Transform3D(0.0626, 0, 0.4456, 0, 0.45, 0, -0.4456, 0, 0.0626, 0.18, -0.17, -0.46)
+
+[node name="PhoneCall" type="Node" parent="Player" unique_id=2137854540]
+script = ExtResource("11_phone")
+
+[node name="Footsteps" type="AudioStreamPlayer" parent="Player" unique_id=657113810]
 volume_db = -12.0
 
 [node name="Ground" type="StaticBody3D" parent="." unique_id=81189268]
@@ -220,44 +221,71 @@ transform = Transform3D(0.342, 0, -0.9397, 0, 1, 0, 0.9397, 0, 0.342, -1, 0, 6)
 [node name="Clover6" parent="Vegetation" unique_id=2120326331 instance=ExtResource("7_clover")]
 transform = Transform3D(0.425, 0, 0.7361, 0, 0.85, 0, -0.7361, 0, 0.425, 2, 0, 4)
 
-[node name="JuniperRegular5" parent="Vegetation" instance=ExtResource("2_reg")]
+[node name="JuniperRegular5" parent="Vegetation" unique_id=1623735557 instance=ExtResource("2_reg")]
 transform = Transform3D(1.0625, 0, -0.2847, 0, 1.1, 0, 0.2847, 0, 1.0625, -12, 0, 0)
 
-[node name="JuniperDead2" parent="Vegetation" instance=ExtResource("1_dead")]
+[node name="JuniperDead2" parent="Vegetation" unique_id=447029950 instance=ExtResource("1_dead")]
 transform = Transform3D(-0.1562, 0, -0.8863, 0, 0.9, 0, 0.8863, 0, -0.1562, -13, 0, -5)
 
-[node name="Brush7" parent="Vegetation" instance=ExtResource("4_brush")]
+[node name="Brush7" parent="Vegetation" unique_id=323062955 instance=ExtResource("4_brush")]
 transform = Transform3D(-0.9397, 0, 0.342, 0, 1, 0, -0.342, 0, -0.9397, -11, 0, 4)
 
-[node name="JelloBush5" parent="Vegetation" instance=ExtResource("3_jello")]
+[node name="JelloBush5" parent="Vegetation" unique_id=1863090021 instance=ExtResource("3_jello")]
 transform = Transform3D(0.6428, 0, -0.766, 0, 1, 0, 0.766, 0, 0.6428, -13, 0, 8)
 
-[node name="Grass10" parent="Vegetation" instance=ExtResource("5_grass")]
+[node name="Grass10" parent="Vegetation" unique_id=1833928563 instance=ExtResource("5_grass")]
 transform = Transform3D(0.45, 0, 0.7794, 0, 0.9, 0, -0.7794, 0, 0.45, -10, 0, 2)
 
-[node name="MouseEars7" parent="Vegetation" instance=ExtResource("6_mouse")]
+[node name="MouseEars7" parent="Vegetation" unique_id=695897188 instance=ExtResource("6_mouse")]
 transform = Transform3D(0.1476, 0, -0.8371, 0, 0.85, 0, 0.8371, 0, 0.1476, -12, 0, 6)
 
-[node name="JuniperRegular6" parent="Vegetation" instance=ExtResource("2_reg")]
+[node name="JuniperRegular6" parent="Vegetation" unique_id=87741636 instance=ExtResource("2_reg")]
 transform = Transform3D(-0.1736, 0, 0.9848, 0, 1, 0, -0.9848, 0, -0.1736, 12, 0, 0)
 
-[node name="Brush8" parent="Vegetation" instance=ExtResource("4_brush")]
+[node name="Brush8" parent="Vegetation" unique_id=787124098 instance=ExtResource("4_brush")]
 transform = Transform3D(0.8426, 0, -0.7071, 0, 1.1, 0, 0.7071, 0, 0.8426, 11, 0, -5)
 
-[node name="JelloBush6" parent="Vegetation" instance=ExtResource("3_jello")]
+[node name="JelloBush6" parent="Vegetation" unique_id=1857511972 instance=ExtResource("3_jello")]
 transform = Transform3D(-0.8863, 0, 0.1562, 0, 0.9, 0, -0.1562, 0, -0.8863, 13, 0, 3)
 
-[node name="Grass11" parent="Vegetation" instance=ExtResource("5_grass")]
+[node name="Grass11" parent="Vegetation" unique_id=511778924 instance=ExtResource("5_grass")]
 transform = Transform3D(-0.342, 0, -0.9397, 0, 1, 0, 0.9397, 0, -0.342, 10, 0, 6)
 
-[node name="Clover7" parent="Vegetation" instance=ExtResource("7_clover")]
+[node name="Clover7" parent="Vegetation" unique_id=1631651614 instance=ExtResource("7_clover")]
 transform = Transform3D(0.8457, 0, -0.3078, 0, 0.9, 0, 0.3078, 0, 0.8457, 12, 0, 8)
 
-[node name="MouseEars8" parent="Vegetation" instance=ExtResource("6_mouse")]
+[node name="MouseEars8" parent="Vegetation" unique_id=2055278992 instance=ExtResource("6_mouse")]
 transform = Transform3D(0.866, 0, 0.5, 0, 1, 0, -0.5, 0, 0.866, 11, 0, -2)
 
-[node name="Brush9" parent="Vegetation" instance=ExtResource("4_brush")]
+[node name="Brush9" parent="Vegetation" unique_id=1052616392 instance=ExtResource("4_brush")]
 transform = Transform3D(0.342, 0, -0.9397, 0, 1, 0, 0.9397, 0, 0.342, -2, 0, 12)
 
-[node name="Grass12" parent="Vegetation" instance=ExtResource("5_grass")]
+[node name="Grass12" parent="Vegetation" unique_id=530443237 instance=ExtResource("5_grass")]
 transform = Transform3D(-0.8927, 0, -0.3249, 0, 0.95, 0, 0.3249, 0, -0.8927, 3, 0, 13)
+
+[node name="CarDrop" type="Node3D" parent="." unique_id=82322756]
+script = ExtResource("12_car")
+
+[node name="Spirits" type="Node3D" parent="." unique_id=1748831026]
+
+[node name="Spirit1" parent="Spirits" unique_id=37091575 instance=ExtResource("9_spirit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -3.5)
+
+[node name="Spirit2" parent="Spirits" unique_id=2038386361 instance=ExtResource("9_spirit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.5, 0, -6)
+spirit_name = "Moss Maiden"
+lens = 1
+
+[node name="Spirit3" parent="Spirits" unique_id=478935327 instance=ExtResource("9_spirit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 0, 3)
+spirit_name = "Hollow Whisper"
+lens = 2
+
+[node name="Spirit4" parent="Spirits" unique_id=2068273539 instance=ExtResource("9_spirit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 0, 8.5)
+spirit_name = "Keeper of Pines"
+lens = 1
+
+[node name="Spirit5" parent="Spirits" unique_id=1186844668 instance=ExtResource("9_spirit")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -13)
+spirit_name = "Lost Lantern"

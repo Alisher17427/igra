@@ -4,6 +4,7 @@ extends Node
 ## pack's alpha-cutout foliage cards and renders them as solid black blocks instead.
 
 const PSXScreenScript := preload("res://addons/psx_look/psx_screen.gd")
+const HudScript := preload("res://scripts/hud.gd")
 const ForestScene := preload("res://scenes/forest_scene.tscn")
 
 
@@ -13,3 +14,7 @@ func _ready() -> void:
 
 	var level := ForestScene.instantiate()
 	psx.viewport.add_child(level)
+
+	var hud: CanvasLayer = HudScript.new()
+	add_child(hud)
+	hud.call("bind_player", level.get_node("Player"))

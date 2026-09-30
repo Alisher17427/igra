@@ -1,0 +1,60 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/spirit.gd" id="1_spirit"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_ghost"]
+resource_local_to_scene = true
+transparency = 1
+shading_mode = 0
+cull_mode = 2
+albedo_color = Color(0.72, 0.95, 1, 0.45)
+
+[sub_resource type="StandardMaterial3D" id="Mat_eye"]
+resource_local_to_scene = true
+transparency = 1
+shading_mode = 0
+albedo_color = Color(0.02, 0.05, 0.08, 0.8)
+
+[sub_resource type="CylinderMesh" id="Mesh_body"]
+top_radius = 0.3
+bottom_radius = 0.04
+height = 1.5
+radial_segments = 8
+rings = 1
+
+[sub_resource type="SphereMesh" id="Mesh_head"]
+radius = 0.3
+height = 0.6
+radial_segments = 8
+rings = 4
+
+[sub_resource type="SphereMesh" id="Mesh_eye"]
+radius = 0.05
+height = 0.1
+radial_segments = 6
+rings = 3
+
+[node name="Spirit" type="Node3D"]
+script = ExtResource("1_spirit")
+
+[node name="Body" type="Node3D" parent="."]
+
+[node name="BodyMesh" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.75, 0)
+material_override = SubResource("Mat_ghost")
+mesh = SubResource("Mesh_body")
+
+[node name="HeadMesh" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.55, 0)
+material_override = SubResource("Mat_ghost")
+mesh = SubResource("Mesh_head")
+
+[node name="EyeL" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.11, 1.6, -0.26)
+material_override = SubResource("Mat_eye")
+mesh = SubResource("Mesh_eye")
+
+[node name="EyeR" type="MeshInstance3D" parent="Body"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.11, 1.6, -0.26)
+material_override = SubResource("Mat_eye")
+mesh = SubResource("Mesh_eye")
